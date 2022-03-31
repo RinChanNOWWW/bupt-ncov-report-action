@@ -11,6 +11,7 @@
   "type": "module",
   "scripts": {
     "start": "ts-node --esm src/index.ts",
+    "local-start": "export $(cat .env | xargs) && ts-node --esm src/index.ts",
     "build": "tsc"
   },
   "dependencies": {

@@ -1,7 +1,6 @@
 import * as core from "@actions/core";
 import got, { Got } from "got";
 import { CookieJar } from "tough-cookie";
-import TelegramBot from "node-telegram-bot-api";
 import { LoginForm, DailyReportForm, DailyReportResponse } from "./form.js";
 import { sleep, randomBetween } from "./utils.js";
 
@@ -153,28 +152,31 @@ async function postDailyReportFormData(
 
     console.log(`今日填报结果：${reportReponse.m}`);
 
-    const chatId = process.env["TG_CHAT_ID"];
-    const botToken = process.env["TG_BOT_TOKEN"];
-
-    if (!!chatId && !!botToken && reportReponse.m !== "今天已经填报了") {
-        const bot = new TelegramBot(botToken);
-        await bot.sendMessage(
-            chatId,
-            `今日填报结果：${reportReponse.m}`,
-            { "parse_mode": "Markdown" }
-        );
+    const QQ = process.env["QQ"];
+    const qqbotSendMsgAPI = process.env["QQBOT_SEND_MSG_API"];
+    if (!!QQ && !!qqbotSendMsgAPI) {
+        console.log("send qq msg")
+        const resp = await got.post(qqbotSendMsgAPI, {
+            json: {
+                message_type: "private",
+                user_id: +QQ,
+                message: `今日疫情打卡填报结果：${reportReponse.m}`
+            }
+        });
     }
 })().catch(err => {
-    const chatId = process.env["TG_CHAT_ID"];
-    const botToken = process.env["TG_BOT_TOKEN"];
-
-    if (!!chatId && !!botToken && err instanceof Error) {
-        const bot = new TelegramBot(botToken);
-        bot.sendMessage(
-            chatId,
-            `填报失败：\`${err.message}\``,
-            { "parse_mode": "Markdown" }
-        );
+    const QQ = process.env["QQ"];
+    const qqbotSendMsgAPI = process.env["QQBOT_SEND_MSG_API"];
+    if (err instanceof Error) {
+        if (!!QQ && !!qqbotSendMsgAPI) {
+            got.post(qqbotSendMsgAPI, {
+                json: {
+                    message_type: "private",
+                    user_id: +QQ,
+                    message: `今日疫情打卡填报失败：\`${err.message}\``
+                }
+            });
+        }
         console.log(err);
     } else {
         throw err;
